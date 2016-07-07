@@ -5,7 +5,22 @@ namespace libs\cache;
 /**
  * Description of Redis
  * See https://github.com/yiisoft/yii2-redis/blob/master/Connection.php
- * @author KowloonZh
+ * strings
+ * @method integer setnx($key, $value)
+ * @method mixed set($key, $value)
+ * @method mixed get($key)
+ * @method integer del($key)
+ * @method mixed getset($key, $value)
+ * list
+ * @method mixed rpop($key)
+ * @method mixed lpop($key)
+ * @method mixed rpush($key, $value)
+ * @method mixed lpush($key, $value)
+ * @method integer llen($key)
+ * @method mixed lrange($key, $start, $stop)
+ * @method mixed blpop($key, $timeout)
+ * @method mixed brpop($key, $timeout)
+ * @author zhangjiulong
  */
 class Redis extends \frame\base\Object
 {
@@ -30,7 +45,7 @@ class Redis extends \frame\base\Object
     public $database = 0;
 
     /**
-     *  @var string unix socket 所在绝对路径 (e.g. `/var/run/redis/redis.sock`) 
+     * @var string unix socket 所在绝对路径 (e.g. `/var/run/redis/redis.sock`)
      */
     public $unix_socket;
 
@@ -43,6 +58,18 @@ class Redis extends \frame\base\Object
      * @var int 读写数据的超时时间 单位s
      */
     public $data_timeout;
+
+    /**
+     * @var bool 是否重连
+     */
+    public $auto_reconnect = false;
+
+    /**
+     * @var int 重连执行次数
+     */
+    public $retry = 3;
+
+    private $_originRetry;
 
     /**
      * @var array 系统redis命令列表 http://redis.io/commands
@@ -195,7 +222,7 @@ class Redis extends \frame\base\Object
     private $_socket;
 
     /**
-     * 
+     *
      * @param string $id
      * @param boolean $throwException
      * @return \libs\cache\Redis
@@ -203,6 +230,17 @@ class Redis extends \frame\base\Object
     public static function di($id = 'redis', $throwException = true)
     {
         return parent::di($id, $throwException);
+    }
+
+    public function init()
+    {
+        parent::init();
+        $this->_originRetry = $this->retry;
+    }
+
+    public function resetRetry()
+    {
+        $this->retry = $this->_originRetry;
     }
 
     /**
@@ -222,16 +260,16 @@ class Redis extends \frame\base\Object
         if ($this->_socket !== null) {
             return;
         }
-        $connection = ($this->unix_socket ? : $this->hostname . ':' . $this->port) . ', database=' . $this->database;
+        $connection = ($this->unix_socket ?: $this->hostname . ':' . $this->port) . ', database=' . $this->database;
 
-        //@todo log 
+        //@todo log
         \libs\log\Loger::info('Opening redis DB connection: ' . $connection, 'redis.connect');
         $this->_socket = @stream_socket_client(
-                        $this->unix_socket ? 'unix://' . $this->unix_socket : 'tcp://' . $this->hostname . ':' . $this->port, $errorNumber, $errorDescription, $this->connect_timeout ? $this->connect_timeout : ini_get("default_socket_timeout")
+            $this->unix_socket ? 'unix://' . $this->unix_socket : 'tcp://' . $this->hostname . ':' . $this->port, $errorNumber, $errorDescription, $this->connect_timeout ? $this->connect_timeout : ini_get("default_socket_timeout")
         );
         if ($this->_socket) {
             if ($this->data_timeout !== null) {
-                stream_set_timeout($this->_socket, $timeout = (int) $this->data_timeout, (int) (($this->data_timeout - $timeout) * 1000000));
+                stream_set_timeout($this->_socket, $timeout = (int)$this->data_timeout, (int)(($this->data_timeout - $timeout) * 1000000));
             }
             if ($this->password !== null) {
                 $this->executeCommand('AUTH', [$this->password]);
@@ -239,7 +277,7 @@ class Redis extends \frame\base\Object
             $this->executeCommand('SELECT', [$this->database]);
         } else {
             \libs\log\Loger::error("Failed to open redis DB connection ($connection): $errorNumber - $errorDescription", 'redis');
-            throw new \frame\base\Exception('Failed to open DB connection.', (int) $errorNumber);
+            throw new \frame\base\Exception('Failed to open DB connection.', (int)$errorNumber);
         }
     }
 
@@ -249,7 +287,7 @@ class Redis extends \frame\base\Object
     public function close()
     {
         if ($this->_socket !== null) {
-            $connection    = ($this->unix_socket ? : $this->hostname . ':' . $this->port) . ', database=' . $this->database;
+            $connection = ($this->unix_socket ?: $this->hostname . ':' . $this->port) . ', database=' . $this->database;
             //@todo log
             \libs\log\Loger::info('Closing DB connection: ' . $connection, 'redis.connect');
             $this->executeCommand('QUIT');
@@ -281,8 +319,8 @@ class Redis extends \frame\base\Object
      *
      * @param string $name 命令的名字
      * @param array $params 命令的参数列表
-     * @return array|bool|null|string 
-     * 
+     * @return array|bool|null|string
+     *
      * 返回值有以下几种可能:
      *
      * - `true` 当命令返回的"status reply"为`'OK'` 或者 `'PONG'`的时候
@@ -319,8 +357,19 @@ class Redis extends \frame\base\Object
     private function parseResponse($command)
     {
         if (($line = fgets($this->_socket)) === false) {
-            throw new \frame\base\Exception("Failed to read from socket.\nRedis command was: " . $command);
+            if ($this->auto_reconnect && $this->retry > 0) {
+                $this->retry--;
+                $params = explode(" ", $command);
+                $name   = array_shift($params);
+
+                $this->_socket = null;
+                return $this->executeCommand($name, $params);
+            } else {
+                throw new \frame\base\Exception("Failed to read from socket.\nRedis command was: " . $command);
+            }
         }
+
+        $this->resetRetry();
         \libs\log\Loger::debug($command . "\n" . $line, 'redis.response');
         $type = $line[0];
         $line = mb_substr($line, 1, -2, '8bit');
@@ -352,7 +401,7 @@ class Redis extends \frame\base\Object
 
                 return mb_substr($data, 0, -2, '8bit');
             case '*': // Multi-bulk replies
-                $count = (int) $line;
+                $count = (int)$line;
                 $data  = [];
                 for ($i = 0; $i < $count; $i++) {
                     $data[] = $this->parseResponse($command);
@@ -364,3 +413,4 @@ class Redis extends \frame\base\Object
         }
     }
 }
+
