@@ -201,10 +201,15 @@ class Query extends Object
 
     public function __construct($config = array())
     {
-        parent::__construct($config);
+        //因sql依赖db,先处理db
+        if(isset($config['db'])){
+            $this->db = $config['db'];
+            unset($config['db']);
+        }
         if ($this->db == null) {
             $this->db = Load::$app->get('db');
         }
+        parent::__construct($config);
     }
 
     /**
