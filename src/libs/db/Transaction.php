@@ -64,8 +64,9 @@ class Transaction extends \frame\base\Object
 
     /**
      * 事务回滚
-     * @param $e 内层事务回滚时抛出的异常，如果不传值默认抛出内部事务错误
-     * @return null
+     * @param \Exception|null $e 内层事务回滚时抛出的异常
+     * @throws \Exception
+     * @throws \frame\base\Exception
      */
     public function rollBack(\Exception $e = null)
     {
@@ -77,7 +78,12 @@ class Transaction extends \frame\base\Object
 
         if ($this->_level == 0) {
             $this->db->pdo->rollBack();
-            return;
+            //如果外层事务回滚并有传递$e,则抛出
+            if($e){
+                throw $e;
+            }else{
+                return;
+            }
         }
         if ($e) {
             throw $e;
