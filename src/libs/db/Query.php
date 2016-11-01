@@ -14,19 +14,19 @@ use PDOStatement;
  * for example
  * ~~~~~~~
  * 特别说明，query对象绑定参数值支持:param=$value的方式，不支持"?"绑定方式
- * 
+ *
  * 表user：
  * CREATE TABLE `user` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL DEFAULT '',
-  `age` tinyint(3) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
- * 
+ * `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+ * `name` varchar(255) NOT NULL DEFAULT '',
+ * `age` tinyint(3) unsigned NOT NULL DEFAULT '0',
+ * PRIMARY KEY (`id`)
+ * ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ *
  * 获取Db数据库连接对象和query对象
  * $db = new \libs\db\DB(['dsn'=>'mysql:dbname=testdb;host=127.0.0.1','username'=>'xxx','password'=>'xxxx']);   //db连接对象应采用更合理的单例
  * $query = new \libs\db\Query(['db'=>$db]);
- * 
+ *
  * 单条语句插入：INSERT INTO `user` (`name`, `age`) VALUES ('zhangjiulong', 3)
  * $res = $query->insert('user',array(
  *      'name'=>'zhangjiulong',
@@ -34,26 +34,26 @@ use PDOStatement;
  * ));
  * 返回影响的行数
  * 如果要获取最新插入的自增id，可使用 $query->getLastInsertId() 获取
- * 
+ *
  * 多条语句插入：INSERT INTO `user`(`name`, `age`) VALUES ('lisi', 13), ('wangwu', 17)
  * $res = $query->batchInsert('user', array('name', 'age'), array(
  *      array('lisi','13'),
  *      array('wangwu',17),
  * ));
  * 返回影响的行数
- * 
- * 
+ *
+ *
  * 修改：UPDATE `user` SET `name`='zhangsanfeng' WHERE `id`=33
  * $res = $query->update('user', ['name'=>'zhangsanfeng'], ['id'=>33]);
  * return: 受影响的行数
  * 注：update方法的第三个参数为条件表达式，支持多种用法，详见下文的`条件表达式`具体使用方法
- * 
- * 删除：DELETE FROM `user` WHERE `id`=34 
+ *
+ * 删除：DELETE FROM `user` WHERE `id`=34
  * $res = $query->delete('user',['id'=>34]);
  * 返回受影响的行数
  * 注：delete方法的第二个参数为条件表达式，支持多种用法，详见下文的`条件表达式`具体使用方法
- * 
- * 
+ *
+ *
  * 查询所有集合(采用单个查询条件)  SELECT * FROM `user` WHERE age>18
  * $res = $query->select('*')->from('user')->where('age>:age',[':age'=>18])->queryAll();
  * return: 二维关联数组
@@ -62,40 +62,40 @@ use PDOStatement;
  *      ['id'=>2,'name'=>'li','age'=>35],
  *      ....
  * ]
- * 
+ *
  * 查询一条记录（采用多个查询条件） SELECT `id`, `name`, `age` FROM `user` WHERE (age>=18) AND (`name` LIKE '%zjl%')
  * $res = $query->select('id,name,age')->from('user')->where('age>=:age',[':age'=>18])->andWhere(['like','name','%zjl%'])->queryRow();
  * return: 一维关联数组
  * ['id'=>1,'name'=>'zs','age'=>20]
- * 
+ *
  * 查询一个值 SELECT count(1) FROM `user`
  * $res = $query->select('count(1)')->from('user')->queryOne();
- * return: count(1)对应的值 
+ * return: count(1)对应的值
  * 10
- * 
+ *
  * 查询某个字段的集合 SELECT `id` FROM `user` WHERE id>5
  * $res = $query->select('id')->from('user')->where('id>:id',[':id'=>5])->queryColumn();
  * return: 一维索引数组
  * [1,2,3,4,5,10]
- * 
+ *
  * 内联查询 SELECT `a`.*, `b`.* FROM `user` `a` JOIN `time` `b` ON a.id=b.uid WHERE `a`.`id`=5
-  $res = $query->select('a.*,b.utime')
-  ->from('user as a')
-  ->join('time as b', 'a.id=b.uid')
-  ->where(['a.id'=>5])
-  ->queryAll();
- * 
+ * $res = $query->select('a.*,b.utime')
+ * ->from('user as a')
+ * ->join('time as b', 'a.id=b.uid')
+ * ->where(['a.id'=>5])
+ * ->queryAll();
+ *
  * 左联查询 SELECT `a`.*, `b`.`name` FROM `user` `a` LEFT JOIN `time` `b` ON a.id=b.uid WHERE (a.id>=5) AND (a.id<=10)
-  $res = $query->select('a.*,b.name')
-  ->from('user as a')
-  ->leftJoin('time as b', 'a.id=b.uid')
-  ->where('a.id>=:id',[':id'=>5])
-  ->andWhere('a.id<=:lid',[':lid'=>10])
-  ->queryAll();
- * 
+ * $res = $query->select('a.*,b.name')
+ * ->from('user as a')
+ * ->leftJoin('time as b', 'a.id=b.uid')
+ * ->where('a.id>=:id',[':id'=>5])
+ * ->andWhere('a.id<=:lid',[':lid'=>10])
+ * ->queryAll();
+ *
  * 分组使用 SELECT min(id),age FROM `user` GROUP BY `age`
  * $res = $query->select('min(id),age')->from('user')->group('age')->queryAll();
- * 
+ *
  * 排序分页(页大小5,当前页是2，取id大于10的集合，按id倒叙排列)
  * $page = 2;   $pagesize = 5;
  * 1. 组装where条件
@@ -107,26 +107,26 @@ use PDOStatement;
  * 4. 执行查询
  * $res = $query->queryAll()
  * (表示取id大于10的集合，按id倒叙排列，取10条，跳过5条)
- * 
+ *
  * 条件表达式 where andWhere orWhere delete update中使用
  * 总体来说，分为3种使用情况,以where($condition,$params)为例
  * 1.键值对数组
  * where(['id'=>3])                 =======>  where id=3
  * where(['id'=>3,'name'=>'zjl'])   =======>  where id=3 and name='zjl'
  * where(['id'=>[3,4,5],'name'=>'zjl'])  ====> where id in (3,4,5) and name='zjl'
- * 
+ *
  * 2.字符串参数
  * where('id>:id',[':id'=>3])      ========>  where id>3
  * where('id=:id',[':id'=>3])      ========>  where id=3
  * where('name like :name and id>:id',[':name'=>'%zjl%',':id'=>3])  =======> where id=3 and name like "%zjl%"
- * 
+ *
  * 3.索引数组（索引数组包含三个值,第一个值是操作符IN|NOT IN|LIKE|AND|OR,第二个值是一个字段或者一个表达式，第三个值为字段对应的值或者另一个表达式）
  * where(['IN','id',[3,4,5]])           =====>  where id in (3,4,5)
  * where(['NOT IN','id',[3,4,5]])       =====>  where id not in (3,4,5)
  * where(['LIKE','name','%zjl%'])       =====>  where name like "%zjl%"
  * where(['AND',['id'=>3],'name=:name'],[':name'=>'zjl'])       ===> where id=3 and name="zjl"
  * where(['OR','id>:id',['NOT IN','id',[7,8]],[':id'=>3])        ===> where id>3 or id not in (7,8)
- * 
+ *
  * 事务操作($db是libs\db\DB的实例)
  * $trans = $db->beginTransaction();        //$trans为libs\db\Transaction对象实例
  * try{
@@ -138,15 +138,15 @@ use PDOStatement;
  *      echo $e->getMessage();
  *      $trans->rollback();
  * }
- * 
+ *
  * 直接写原生sql
  * $query = $db->createQuery($sql);
  * //直接执行execute，返回影响函数
- * $query->execute(); 
+ * $query->execute();
  * //或者执行query系列操作，返回结果集
  * $query->queryAll();
- * 
- * 
+ *
+ *
  * ~~~~~~~~
  * @author zhangjiulong
  */
@@ -166,7 +166,8 @@ class Query extends Object
 
     /**
      *
-     * @var PDOStatement     */
+     * @var PDOStatement
+     */
     public $pdoStatement;
 
     /**
@@ -177,19 +178,19 @@ class Query extends Object
 
     /**
      * 对预处理语句绑定的参数
-     * @var array 
+     * @var array
      */
     public $params = [];
 
     /**
      * 实际绑定的参数，在bindValues()中使用
-     * @var array 
+     * @var array
      */
     private $_pendingParams = [];
 
     /**
      * sql语句
-     * @var string 
+     * @var string
      */
     private $_sql;
 
@@ -202,7 +203,7 @@ class Query extends Object
     public function __construct($config = array())
     {
         //因sql依赖db,先处理db
-        if(isset($config['db'])){
+        if (isset($config['db'])) {
             $this->db = $config['db'];
             unset($config['db']);
         }
@@ -279,10 +280,10 @@ class Query extends Object
             Loger::info($this->getRawSql(), 'sql.execute');
             $begin_time = microtime(true);
             $this->pdoStatement->execute();
-            $spend      = microtime(true) - $begin_time;
-            $consume    = round($spend * 1000, 2);
+            $spend   = microtime(true) - $begin_time;
+            $consume = round($spend * 1000, 2);
             Loger::info('The above sql consume ' . $consume . ' ms', 'sql.execute');
-            $n          = $this->pdoStatement->rowCount();
+            $n = $this->pdoStatement->rowCount();
             return $n;
         } catch (\Exception $e) {
             //如果自动可以自动重连
@@ -292,7 +293,7 @@ class Query extends Object
                 $this->bindValues();
                 return $this->execute();
             } else {
-                throw new \frame\base\Exception('Error to execute sql, ' . $e->getMessage(), (int) $e->getCode());
+                throw new \frame\base\Exception('Error to execute sql, ' . $e->getMessage(), (int)$e->getCode() + 1000);
             }
         }
     }
@@ -324,7 +325,7 @@ class Query extends Object
              */
             $this->bindPendingParams();
         } catch (\Exception $e) {
-            throw new \frame\base\Exception('Fail to prepare SQL: ' . $sql . ',' . $e->getMessage(), (int) $e->getCode());
+            throw new \frame\base\Exception('Fail to prepare SQL: ' . $sql . ',' . $e->getMessage(), (int)$e->getCode() + 1000);
         }
     }
 
@@ -439,8 +440,8 @@ class Query extends Object
         if (!empty($query['order'])) {
             $sql .= "\nORDER BY " . $query['order'];
         }
-        $limit  = isset($query['limit']) ? (int) $query['limit'] : -1;
-        $offset = isset($query['limit']) ? (int) $query['offset'] : -1;
+        $limit  = isset($query['limit']) ? (int)$query['limit'] : -1;
+        $offset = isset($query['limit']) ? (int)$query['offset'] : -1;
         if ($limit > 0 || $offset > 0) {
             $sql = $this->applyLimit($sql, $limit, $offset);
         }
@@ -457,10 +458,10 @@ class Query extends Object
     public function applyLimit($sql, $limit, $offset)
     {
         if ($limit >= 0) {
-            $sql .= ' LIMIT ' . (int) $limit;
+            $sql .= ' LIMIT ' . (int)$limit;
         }
         if ($offset >= 0) {
-            $sql .= ' OFFSET ' . (int) $offset;
+            $sql .= ' OFFSET ' . (int)$offset;
         }
         return $sql;
     }
@@ -486,8 +487,8 @@ class Query extends Object
             }
         }
         $sql = 'INSERT INTO ' . $this->db->quoteTableName($table)
-                . ' (' . implode(', ', $names) . ') VALUES ('
-                . implode(', ', $placeholders) . ')';
+            . ' (' . implode(', ', $names) . ') VALUES ('
+            . implode(', ', $placeholders) . ')';
 
         return $this->setSql($sql)->bindValues()->execute();
     }
@@ -524,7 +525,7 @@ class Query extends Object
                 } else {
                     $phName = self::PARAM_PREFIX . count($this->params);
                     $this->addParams(["$phName" => $value]);
-                    $value  = "$phName";
+                    $value = "$phName";
                 }
                 $vs[$i] = $value;
             }
@@ -544,7 +545,7 @@ class Query extends Object
         }
 
         $sql = 'INSERT INTO ' . $this->db->quoteTableName($table) .
-                '(' . implode(', ', $columns) . ') VALUES ' . implode(', ', $values);
+            '(' . implode(', ', $columns) . ') VALUES ' . implode(', ', $values);
 
         return $this->setSql($sql)->bindValues()->execute();
     }
@@ -569,7 +570,7 @@ class Query extends Object
                 $this->addParams([":$name" => $value]);
             }
         }
-        $sql   = 'UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . implode(', ', $lines);
+        $sql = 'UPDATE ' . $this->db->quoteTableName($table) . ' SET ' . implode(', ', $lines);
         if (($where = $this->buildCondition($condition)) != '') {
             $sql .= ' WHERE ' . $where;
         }
@@ -585,7 +586,7 @@ class Query extends Object
      */
     public function delete($table, $condition = '', $params = [])
     {
-        $sql   = 'DELETE FROM ' . $this->db->quoteTableName($table);
+        $sql = 'DELETE FROM ' . $this->db->quoteTableName($table);
         if (($where = $this->buildCondition($condition)) != '') {
             $sql .= ' WHERE ' . $where;
         }
@@ -608,7 +609,7 @@ class Query extends Object
 
             foreach ($columns as $i => $column) {
                 if (is_object($column))
-                    $columns[$i] = (string) $column;
+                    $columns[$i] = (string)$column;
                 elseif (strpos($column, '(') === false) {
                     if (preg_match('/^(.*?)(?i:\s+as\s+|\s+)(.*)$/', $column, $matches))
                         $columns[$i] = $this->db->quoteColumnName($matches[1]) . ' AS ' . $this->db->quoteColumnName($matches[2]);
@@ -845,7 +846,7 @@ class Query extends Object
                 $columns = preg_split('/\s*,\s*/', trim($columns), -1, PREG_SPLIT_NO_EMPTY);
             foreach ($columns as $i => $column) {
                 if (is_object($column))
-                    $columns[$i] = (string) $column;
+                    $columns[$i] = (string)$column;
                 elseif (strpos($column, '(') === false)
                     $columns[$i] = $this->db->quoteColumnName($column);
             }
@@ -901,7 +902,7 @@ class Query extends Object
                 $columns = preg_split('/\s*,\s*/', trim($columns), -1, PREG_SPLIT_NO_EMPTY);
             foreach ($columns as $i => $column) {
                 if (is_object($column))
-                    $columns[$i] = (string) $column;
+                    $columns[$i] = (string)$column;
                 elseif (strpos($column, '(') === false) {
                     if (preg_match('/^(.*?)\s+(asc|desc)$/i', $column, $matches))
                         $columns[$i] = $this->db->quoteColumnName($matches[1]) . ' ' . strtoupper($matches[2]);
@@ -931,10 +932,10 @@ class Query extends Object
      */
     public function page($page = 1, $pagesize = 50)
     {
-        if(empty($page)){
+        if (empty($page)) {
             $page = 1;
         }
-        if(empty($pagesize)){
+        if (empty($pagesize)) {
             $pagesize = 50;
         }
         $this->limit($pagesize, $pagesize * ($page - 1));
@@ -949,7 +950,7 @@ class Query extends Object
      */
     public function limit($limit, $offset = null)
     {
-        $this->_query['limit'] = (int) $limit;
+        $this->_query['limit'] = (int)$limit;
         if ($offset !== null)
             $this->offset($offset);
         return $this;
@@ -972,7 +973,7 @@ class Query extends Object
      */
     public function offset($offset)
     {
-        $this->_query['offset'] = (int) $offset;
+        $this->_query['offset'] = (int)$offset;
         return $this;
     }
 
@@ -1230,8 +1231,8 @@ class Query extends Object
             Loger::info($this->getRawSql(), 'sql.query');
             $begin_time = microtime(true);
             $this->pdoStatement->execute();
-            $spend      = microtime(true) - $begin_time;
-            $consume    = round($spend * 1000, 2);
+            $spend   = microtime(true) - $begin_time;
+            $consume = round($spend * 1000, 2);
             Loger::info('The above sql consume ' . $consume . ' ms', 'sql.query');
             if ($method == '') {
                 return $this->pdoStatement;
@@ -1239,7 +1240,7 @@ class Query extends Object
                 if ($fetchMode === null) {
                     $fetchMode = $this->fetchMode;
                 }
-                $result = call_user_func_array([$this->pdoStatement, $method], (array) $fetchMode);
+                $result = call_user_func_array([$this->pdoStatement, $method], (array)$fetchMode);
                 $this->pdoStatement->closeCursor();
                 return $result;
             }
@@ -1250,7 +1251,7 @@ class Query extends Object
                 $this->cancel();
                 return $this->queryInternal($method, $fetchMode);
             } else {
-                throw new \frame\base\Exception('Query fail:' . $e->getMessage(), (int) $e->getCode());
+                throw new \frame\base\Exception('Query fail:' . $e->getMessage(), (int)$e->getCode() + 1000);
             }
         }
     }
@@ -1263,8 +1264,8 @@ class Query extends Object
     {
         $cloneQuery = clone $this;
         $cloneQuery->limit(-1, -1);
-        $group      = $cloneQuery->getGroup();
-        $having     = $cloneQuery->getHaving();
+        $group  = $cloneQuery->getGroup();
+        $having = $cloneQuery->getHaving();
         if (!empty($group) || !empty($having)) {
             $cloneQuery->order('');
             $sql = $cloneQuery->getSql();
@@ -1272,9 +1273,9 @@ class Query extends Object
             $cloneQuery->setSql($sql);
             return $cloneQuery->queryOne();
         } else {
-            if($cloneQuery->getDistinct() == true){
+            if ($cloneQuery->getDistinct() == true) {
                 $cloneQuery->select("COUNT(DISTINCT {$cloneQuery->getSelect()})");
-            }else{
+            } else {
                 $cloneQuery->select("COUNT(*)");
             }
             $cloneQuery->order('');
