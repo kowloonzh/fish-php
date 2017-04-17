@@ -5,7 +5,7 @@ namespace libs\db;
 /**
  * Description of Transaction
  * 数据库事务类
- * @author KowloonZh
+ * @author zhangjiulong
  */
 class Transaction extends \frame\base\Object
 {
@@ -18,7 +18,7 @@ class Transaction extends \frame\base\Object
 
     /**
      * 事务的层级，用来控制多层事务嵌套
-     * @var type 
+     * @var bool
      */
     private $_level = 0;
 
@@ -40,7 +40,22 @@ class Transaction extends \frame\base\Object
         $this->db->open();
 
         if ($this->_level == 0) {
-            $this->db->pdo->beginTransaction();
+            HELL:
+            try {
+
+                @$this->db->pdo->beginTransaction();
+
+            } catch (\PDOException $e) {
+
+                //如果自动可以自动重连
+                if ($this->db->auto_reconnect && in_array($e->errorInfo[1], [2013, 2006])) {
+                    $this->db->pdo = null;
+                    $this->db->open();
+                    goto HELL;
+                } else {
+                    throw $e;
+                }
+            }
         }
 
         $this->_level++;
@@ -64,7 +79,7 @@ class Transaction extends \frame\base\Object
 
     /**
      * 事务回滚
-     * @param \Exception|null $e 内层事务回滚时抛出的异常
+     * @param \Exception|null $e // 内层事务回滚时抛出的异常，如果不传值默认抛出内部事务错误
      * @throws \Exception
      * @throws \frame\base\Exception
      */
@@ -78,10 +93,10 @@ class Transaction extends \frame\base\Object
 
         if ($this->_level == 0) {
             $this->db->pdo->rollBack();
-            //如果外层事务回滚并有传递$e,则抛出
-            if($e){
+            //如果外层事务传递了$e,则抛出外部异常
+            if ($e) {
                 throw $e;
-            }else{
+            } else {
                 return;
             }
         }
@@ -93,3 +108,4 @@ class Transaction extends \frame\base\Object
     }
 
 }
+

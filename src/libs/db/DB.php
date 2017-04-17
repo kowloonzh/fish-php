@@ -2,19 +2,21 @@
 
 namespace libs\db;
 
+use libs\log\Loger;
+
 /**
  * Description of DB
  * 数据库链接
- * @author KowloonZh
+ * @author zhangjiulong
  */
 class DB extends \frame\base\Object
 {
 
     /**
-     * 数据源名称或叫做 DSN，包含了请求连接到数据库的信息。 
+     * 数据源名称或叫做 DSN，包含了请求连接到数据库的信息。
      * eg:
      * $dsn  =  'mysql:dbname=testdb;host=127.0.0.1' ;
-     * @var string 
+     * @var string
      */
     public $dsn;
 
@@ -26,14 +28,14 @@ class DB extends \frame\base\Object
 
     /**
      * DSN字符串中的密码
-     * @var string 
+     * @var string
      */
     public $password;
 
     /**
      * pdo的属性配置
      * 一个具体驱动的连接选项的键=>值数组。
-     * @var array 
+     * @var array
      */
     public $atttibutes;
 
@@ -51,13 +53,13 @@ class DB extends \frame\base\Object
 
     /**
      * PDO对象的类名，可扩展为原声PDO的子类对象
-     * @var string 
+     * @var string
      */
     public $pdoClass = 'PDO';
 
     /**
      * 表前缀或者表后缀
-     * @var string 
+     * @var string
      */
     public $tablePrefix = '';
 
@@ -69,18 +71,24 @@ class DB extends \frame\base\Object
 
     /**
      * 事务对象
-     * @var libs\db\Transaction 
+     * @var Transaction
      */
     private $_transaction;
 
     /**
      * 是否自动重连
-     * @var boolean 
+     * @var boolean
      */
     public $auto_reconnect = false;
 
     /**
-     * 
+     * 记录执行超时的日志,单位 ms
+     * @var int
+     */
+    public $log_timeout = 1000;
+
+    /**
+     *
      * @param string $id 容器中DB对应的类ID标示
      * @param boolean $throwException
      * @return \libs\db\DB
@@ -123,7 +131,8 @@ class DB extends \frame\base\Object
             $this->pdo = $this->createPdoInstance();
             $this->initConnection();
         } catch (\PDOException $e) {
-            throw new \frame\base\Exception($e->getMessage(), (int) $e->getCode());
+            Loger::error(['msg' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 'sql.connect');
+            throw new \frame\base\Exception($e->getMessage(), (int)$e->getCode());
         }
     }
 
@@ -189,7 +198,7 @@ class DB extends \frame\base\Object
     {
         $this->open();
         if (($transaction = $this->getTransaction()) === null) {
-            $transaction        = $this->_transaction = new Transaction(['db' => $this]);
+            $transaction = $this->_transaction = new Transaction(['db' => $this]);
         }
         $transaction->begin();
         return $transaction;
@@ -212,7 +221,7 @@ class DB extends \frame\base\Object
     public function quoteSql($sql)
     {
         return preg_replace_callback(
-                '/(\\{\\{(%?[\w\-\. ]+%?)\\}\\}|\\[\\[([\w\-\. ]+)\\]\\])/', function ($matches) {
+            '/(\\{\\{(%?[\w\-\. ]+%?)\\}\\}|\\[\\[([\w\-\. ]+)\\]\\])/', function ($matches) {
             if (isset($matches[3])) {
                 return $this->quoteColumnName($matches[3]);
             } else {
@@ -309,14 +318,14 @@ class DB extends \frame\base\Object
     public function getPdoType($value)
     {
         static $map = array
-            (
+        (
             'boolean'  => \PDO::PARAM_BOOL,
             'integer'  => \PDO::PARAM_INT,
             'string'   => \PDO::PARAM_STR,
             'resource' => \PDO::PARAM_LOB,
             'NULL'     => \PDO::PARAM_NULL,
         );
-        $type       = gettype($value);
+        $type = gettype($value);
         return isset($map[$type]) ? $map[$type] : \PDO::PARAM_STR;
     }
 
@@ -324,7 +333,7 @@ class DB extends \frame\base\Object
      * 创建Query操作对象
      * @param string|null $sql
      * @param array $params
-     * @return libs\db\Query
+     * @return \libs\db\Query
      */
     public function createQuery($sql = null, $params = [])
     {
@@ -336,3 +345,4 @@ class DB extends \frame\base\Object
     }
 
 }
+

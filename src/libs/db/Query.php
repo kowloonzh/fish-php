@@ -183,6 +183,10 @@ class Query extends Object
     public $params = [];
 
     /**
+     * 设置debug，当true时，会打印出sql
+     */
+    private $debug = false;
+    /**
      * 实际绑定的参数，在bindValues()中使用
      * @var array
      */
@@ -275,17 +279,25 @@ class Query extends Object
         }
         $this->prepare();
 
+        $rawSql = $this->getRawSql();
+
         try {
             //@TODO 此处可记录SQL日志 log($this->getRawSql())
-            Loger::info($this->getRawSql(), 'sql.execute');
+            Loger::info($rawSql, 'sql.execute');
             $begin_time = microtime(true);
-            $this->pdoStatement->execute();
+            @$this->pdoStatement->execute();
             $spend   = microtime(true) - $begin_time;
-            $consume = round($spend * 1000, 2);
+            $consume = round($spend * 1000);
             Loger::info('The above sql consume ' . $consume . ' ms', 'sql.execute');
+
+            // 记录超时的日志
+            if ($consume >= $this->db->log_timeout) {
+                Loger::info(['consume(ms)' => $consume, 'sql' => $rawSql], 'sql.timeout');
+            }
+
             $n = $this->pdoStatement->rowCount();
             return $n;
-        } catch (\Exception $e) {
+        } catch (\PDOException $e) {
             //如果自动可以自动重连
             if (in_array($e->errorInfo[1], array(2013, 2006)) && $this->db->auto_reconnect) {
                 $this->db->close();
@@ -293,6 +305,10 @@ class Query extends Object
                 $this->bindValues();
                 return $this->execute();
             } else {
+
+                // 记录错误的日志
+                Loger::error($rawSql, 'sql');
+
                 throw new \frame\base\Exception('Error to execute sql, ' . $e->getMessage(), (int)$e->getCode() + 1000);
             }
         }
@@ -415,30 +431,31 @@ class Query extends Object
      */
     public function buildQuery($query)
     {
-        $sql = !empty($query['distinct']) ? 'SELECT DISTINCT' : 'SELECT';
+        $sql = $query['use_master'] ? '/*master*/ ' : '';
+        $sql .= !empty($query['distinct']) ? 'SELECT DISTINCT' : 'SELECT';
         $sql .= ' ' . (!empty($query['select']) ? $query['select'] : '*');
         if (!empty($query['from'])) {
-            $sql .= "\nFROM " . $query['from'];
+            $sql .= " FROM " . $query['from'];
         } else {
             throw new \frame\base\Exception('The DB query must contain the "from" portion');
         }
         if (!empty($query['join'])) {
-            $sql .= "\n" . (is_array($query['join']) ? implode("\n", $query['join']) : $query['join']);
+            $sql .= " " . (is_array($query['join']) ? implode(" ", $query['join']) : $query['join']);
         }
         if (!empty($query['where'])) {
-            $sql .= "\nWHERE " . $query['where'];
+            $sql .= " WHERE " . $query['where'];
         }
         if (!empty($query['group'])) {
-            $sql .= "\nGROUP BY " . $query['group'];
+            $sql .= " GROUP BY " . $query['group'];
         }
         if (!empty($query['having'])) {
-            $sql .= "\nHAVING " . $query['having'];
+            $sql .= " HAVING " . $query['having'];
         }
         if (!empty($query['union'])) {
-            $sql .= "\nUNION (\n" . (is_array($query['union']) ? implode("\n) UNION (\n", $query['union']) : $query['union']) . ')';
+            $sql .= " UNION ( " . (is_array($query['union']) ? implode(" ) UNION ( ", $query['union']) : $query['union']) . ')';
         }
         if (!empty($query['order'])) {
-            $sql .= "\nORDER BY " . $query['order'];
+            $sql .= " ORDER BY " . $query['order'];
         }
         $limit  = isset($query['limit']) ? (int)$query['limit'] : -1;
         $offset = isset($query['limit']) ? (int)$query['offset'] : -1;
@@ -504,10 +521,11 @@ class Query extends Object
 
     /**
      * 批量插入数据
-     * @param string $table 表名
-     * @param array $columns 字段列表[column1,column2...]
-     * @param array $rows 多行值 [[column1=>value1,column2=>value2],[....]]
-     * @return 影响的行数
+     * @param string $table // 表名
+     * @param array $columns // 字段列表[column1,column2...]
+     * @param array $rows // 多行值 [[column1=>value1,column2=>value2],[....]]
+     * @return int // 影响的行数
+     * @throws \frame\base\Exception
      */
     public function batchInsert($table, $columns, $rows)
     {
@@ -654,6 +672,16 @@ class Query extends Object
     }
 
     /**
+     * 设置使用主库
+     * @return $this
+     */
+    public function setUseMaster()
+    {
+        $this->_query['use_master'] = true;
+        return $this;
+    }
+
+    /**
      * 返回是否有distinct
      * @return string
      */
@@ -709,7 +737,8 @@ class Query extends Object
     /**
      * 添加待绑定的参数 只支持:pl=>val的绑定方式
      * @param array $params
-     * @return Query
+     * @return $this
+     * @throws \frame\base\Exception
      */
     public function addParams(array $params)
     {
@@ -927,8 +956,9 @@ class Query extends Object
 
     /**
      * 设置分页
-     * @param int $page 页码
-     * @param int $pagesize 页大小
+     * @param int $page // 页码
+     * @param int $pagesize // 页大小
+     * @return $this
      */
     public function page($page = 1, $pagesize = 50)
     {
@@ -1014,7 +1044,9 @@ class Query extends Object
 
     /**
      * 组装sql的条件表达式
-     * @param string|array $conditions
+     * @param $conditions
+     * @return string
+     * @throws \frame\base\Exception
      */
     protected function buildCondition($conditions)
     {
@@ -1156,12 +1188,23 @@ class Query extends Object
     }
 
     /**
+     * 设置debug时，在查询前会打印出sql，并中断
+     */
+    public function debug()
+    {
+        $this->debug = true;
+        return $this;
+    }
+
+    /**
      * 返回PDOstatement对象
      * @return PDOStatement
      */
     public function query()
     {
-        return $this->queryInternal('', 0);
+        $stat = $this->queryInternal('', 0);
+        $stat->setFetchMode($this->fetchMode);
+        return $stat;
     }
 
     /**
@@ -1212,7 +1255,7 @@ class Query extends Object
     /**
      * 执行查询
      * @param string $method 查询类型
-     * @param 返回的数据结构 $fetchMode
+     * @param int $fetchMode 返回的数据结构
      * @return mixed
      * @throws \frame\base\Exception
      */
@@ -1226,14 +1269,27 @@ class Query extends Object
          * 预处理
          */
         $this->prepare();
+
+        $rawSql = $this->getRawSql();
+
         try {
+            if ($this->debug === true) {
+                echo $rawSql;
+                die;
+            }
             //@TODO 此处记录查询语句 log($this->getRawSql())
-            Loger::info($this->getRawSql(), 'sql.query');
+            Loger::info($rawSql, 'sql.query');
             $begin_time = microtime(true);
-            $this->pdoStatement->execute();
+            @$this->pdoStatement->execute();
             $spend   = microtime(true) - $begin_time;
-            $consume = round($spend * 1000, 2);
+            $consume = round($spend * 1000);
             Loger::info('The above sql consume ' . $consume . ' ms', 'sql.query');
+
+            // 记录超时日志
+            if ($consume >= $this->db->log_timeout) {
+                Loger::info(['consume(ms)' => $consume, 'sql' => $rawSql], 'sql.timeout');
+            }
+
             if ($method == '') {
                 return $this->pdoStatement;
             } else {
@@ -1244,13 +1300,16 @@ class Query extends Object
                 $this->pdoStatement->closeCursor();
                 return $result;
             }
-        } catch (\Exception $e) {
+        } catch (\PDOException $e) {
             //如果自动可以自动重连
             if (in_array($e->errorInfo[1], array(2013, 2006)) && $this->db->auto_reconnect) {
                 $this->db->close();
                 $this->cancel();
                 return $this->queryInternal($method, $fetchMode);
             } else {
+                // 记录错误日志
+                Loger::error($rawSql, 'sql');
+
                 throw new \frame\base\Exception('Query fail:' . $e->getMessage(), (int)$e->getCode() + 1000);
             }
         }
