@@ -127,7 +127,7 @@ class App extends \frame\base\App
             //@TODO log
             return null;
         }
-        //驼峰命名的控制器可以用短横分隔来请求 admin-hulk/index 相当于 AdminHulkConsole::indexAction()
+        //驼峰命名的控制器可以用短横分隔来请求 admin-fish/index 相当于 AdminFishConsole::indexAction()
         $className        = str_replace(' ', '', ucwords(str_replace('-', ' ', $className))) . 'Console';
         //控制器的命名空间
         $consoleNamespace = $module . '/consoles/' . ltrim($prefix . '/', '/') . $className;

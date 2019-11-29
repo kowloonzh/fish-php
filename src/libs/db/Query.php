@@ -28,9 +28,9 @@ use PDOStatement;
  * $db = new \libs\db\DB(['dsn'=>'mysql:dbname=testdb;host=127.0.0.1','username'=>'xxx','password'=>'xxxx']);   //db连接对象应采用更合理的单例
  * $query = new \libs\db\Query(['db'=>$db]);
  *
- * 单条语句插入：INSERT INTO `user` (`name`, `age`) VALUES ('zhangjiulong', 3)
+ * 单条语句插入：INSERT INTO `user` (`name`, `age`) VALUES ('KowloonZh', 3)
  * $res = $query->insert('user',array(
- *      'name'=>'zhangjiulong',
+ *      'name'=>'KowloonZh',
  *      'age'=>3
  * ));
  * 返回影响的行数

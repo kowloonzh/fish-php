@@ -5,7 +5,7 @@ namespace libs\widgets;
 /**
  * Description of KvWidget
  * 根据键值对来生成内容
- * @author zhangjiulong
+ * @author KowloonZh
  */
 class KvWidget extends TextWidget
 {

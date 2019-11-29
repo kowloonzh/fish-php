@@ -5,7 +5,7 @@ namespace common\libs;
 /**
  * Description of MailUtil
  * 邮件发送工具类
- * @author zhangjiulong
+ * @author KowloonZh
  */
 class MailUtil
 {

@@ -147,7 +147,7 @@ class BaseThird extends God
     }
 
     /**
-     * 解析返回值,只能处理固定返回值的结果,类似hulk的项目接口
+     * 解析返回值,只能处理固定返回值的结果
      * @param array $ret // [errno:xx,errmsg:xxx,data:xxxx]
      * @return mixed
      * @throws ExceptionBiz
@@ -256,7 +256,7 @@ class BaseThird extends God
 
 
     /**
-     * 生成带query参数的url, eg. buildQueryUrl('http://360.cn',['user'=>'zjl'])   =>  http://360.cn?user=zjl
+     * 生成带query参数的url, eg. buildQueryUrl('http://fish.com',['user'=>'zjl'])   =>  http://fish.com?user=zjl
      * @param string $url
      * @param array $params
      * @return string

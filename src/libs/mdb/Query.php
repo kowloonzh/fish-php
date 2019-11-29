@@ -25,7 +25,7 @@ use MongoDB\Driver\Command;
  * $query = new \libs\mdb\Query(['mdb'=>$mdb]);
  *
  * 向集合 user 中增加一行记录
- * $objectId = $query->from('user')->insert(['username'=>'zhangjiulong','age'=>18]);
+ * $objectId = $query->from('user')->insert(['username'=>'KowloonZh','age'=>18]);
  *
  * 修改一行记录
  * $num = $query->where(['_id'=>$id])->addOption('multi',false)->update(['age'=>18]);
@@ -71,12 +71,12 @@ use MongoDB\Driver\Command;
  * 查询某个字段的集合 db.user.find({'age':{$lt:20}},{username:1,_id:0});
  * $res = $query->select('username')->from('user')->where(['age'=>['$lt'=>20]])->queryColumn();
  * return: 一维索引数组
- * ['zhangjiulong','qiuzhaohai','fengxueguang']
+ * ['zhang','qiu','feng']
  *
  * 查询一个值 db.user.findOne({'age':{$lt:20}},{username:1,_id:0});
  * $res = $query->select('username','_id')->from('user')->queryOne();
  * return: 第一行第一列对应的值
- * 'zhangjiulong'
+ * 'KowloonZh'
  *
  *
  * 查询 count 值 db.user.findOne({'age':{$lt:20}}}).count();

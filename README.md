@@ -116,7 +116,7 @@ git clone git@github.com:KowloonZh/fish-php.git $app_name
 注：配置中的 common 的值使用了上面配置的 app 别名，配置文件中的 modules 配置的每个模块默认会生成一个路径别名，配置时防止与 aliases 中配置的名称冲突
 
 #### 6.2 自动加载的机制
-在入口文件index.php中require框架hulk_frame/frame/Load.php之后，就拥有的自动加载的功能
+在入口文件index.php中require框架 frame/Load.php之后，就拥有的自动加载的功能
 当访问 frame\web\App 这个类时，其实是在访问 @frame对应的路径/web/App.php文件
 
 ### 7. 控制器
@@ -220,7 +220,7 @@ class UserDao extends BaseDao
 #### 8.3 使用 Dao 来操作数据库
 ```
 // 增加: 
-UserDao::insert(['name'=>'zhangjiulong','age'=>3]);
+UserDao::insert(['name'=>'kowloonzh','age'=>3]);
 
 //修改：
 UserDao::update(['age'=>18],['id'=>1]);

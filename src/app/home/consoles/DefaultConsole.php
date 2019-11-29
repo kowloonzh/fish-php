@@ -6,7 +6,7 @@ use common\consoles\Console;
 /**
  * Description of DefaultConsole
  *
- * @author zhangjiulong
+ * @author KowloonZh
  */
 class DefaultConsole extends Console
 {

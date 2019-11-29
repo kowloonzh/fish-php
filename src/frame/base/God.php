@@ -30,7 +30,7 @@ use Load;
  * $user = User::ins(['age'=>10])
  *
  * ~~~~~~·
- * @author zhangjiulong
+ * @author KowloonZh
  */
 class God
 {

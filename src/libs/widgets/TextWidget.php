@@ -5,14 +5,14 @@ namespace libs\widgets;
 /**
  * Description of TextWidget
  * 文本挂件
- * @author zhangjiulong
+ * @author KowloonZh
  */
 class TextWidget extends \libs\widgets\Widget
 {
 
-    public $title = 'HULK 云平台';
+    public $title = '';
     public $content; //实际输出的内容
-    public $footer = '360 Hulk system';
+    public $footer = '';
     public $width = 900;
 
     public function run()

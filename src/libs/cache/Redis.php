@@ -127,7 +127,7 @@ use libs\log\Loger;
  * @method mixed publish($channel, $message)
  * @method mixed subscribe($channel, ...$channels)
  *
- * @author zhangjiulong
+ * @author KowloonZh
  */
 class Redis extends God
 {

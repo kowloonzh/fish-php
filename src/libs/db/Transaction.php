@@ -5,7 +5,7 @@ namespace libs\db;
 /**
  * Description of Transaction
  * 数据库事务类
- * @author zhangjiulong
+ * @author KowloonZh
  */
 class Transaction extends \frame\base\God
 {

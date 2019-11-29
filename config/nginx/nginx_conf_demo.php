@@ -1,11 +1,11 @@
 server {
-    listen 8360;
-    server_name {usr}.hulk.com;
+    listen 8090;
+    server_name {usr}.fish.com;
     root {root}/src/www;
     index index.php;
 
-    access_log /data/nginx/logs/{usr}.hulk.com-access.log combinedio;
-    error_log  /data/nginx/logs/{usr}.hulk.com-error.log;
+    access_log /data/nginx/logs/{usr}.fish.com-access.log combinedio;
+    error_log  /data/nginx/logs/{usr}.fish.com-error.log;
 
     if (!-e $request_filename) {
         rewrite ^/(.*) /index.php?$1 last;

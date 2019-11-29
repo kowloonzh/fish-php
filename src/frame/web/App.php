@@ -177,11 +177,11 @@ class App extends \frame\base\App
         if ($prefix !== '' && !preg_match('/^[a-zA-Z0-9_\/]+$/', $prefix)) {
             return null;
         }
-        //驼峰命名的控制器可以用短横分隔来请求 admin-hulk/index 相当于 AdminHulkController::indexAction()
+        // 驼峰命名的控制器可以用短横分隔来请求 admin-fish/index 相当于 AdminFishController::indexAction()
         $className           = str_replace(' ', '', ucwords(str_replace('-', ' ', $className))) . 'Controller';
-        //控制器的命名空间
+        // 控制器的命名空间
         $controllerNamespace = $module . '/controllers/' . ltrim($prefix . '/', '/') . $className;
-        //如果控制器类文件不存在 返回空
+        // 如果控制器类文件不存在 返回空
         $controllerFile      = Load::getAlias('@' . $controllerNamespace . '.php');
         if (!file_exists($controllerFile)) {
             return null;

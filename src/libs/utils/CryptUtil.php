@@ -9,12 +9,12 @@ namespace libs\utils;
 class CryptUtil {
 
     //解密
-    public static function decrypt($string, $key = 'hulk_private') {
+    public static function decrypt($string, $key = 'fish_private') {
         return self::execute($string, $key, 'decode');
     }
 
     //加密
-    public static function encrypt($string, $key = 'hulk_private') {
+    public static function encrypt($string, $key = 'fish_private') {
         return self::execute($string, $key, 'encode');
     }
 
