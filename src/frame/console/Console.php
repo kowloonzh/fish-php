@@ -3,7 +3,7 @@
 namespace frame\console;
 
 use frame\base\Exception;
-use frame\base\Object;
+use frame\base\God;
 use Load;
 use ReflectionClass;
 use ReflectionMethod;
@@ -18,7 +18,7 @@ use ReflectionMethod;
  * 
  * @author KowloonZh
  */
-class Console extends Object
+class Console extends God
 {
 
     const FG_BLACK    = 30;

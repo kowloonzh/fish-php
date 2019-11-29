@@ -7,7 +7,7 @@ namespace frame\base;
  * 请求对象基类
  * @author KowloonZh
  */
-abstract class Request extends Object
+abstract class Request extends God
 {
 
     /**

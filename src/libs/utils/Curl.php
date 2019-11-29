@@ -46,6 +46,7 @@ class Curl
     public $rawResponseHeaders = '';
     public $response = null;
     public $rawResponse = null;
+    public $keepRawResponse = false;
 
     public $beforeSendFunction = null;
     public $downloadCompleteFunction = null;
@@ -229,7 +230,9 @@ class Curl
 
         $this->setURL($url, $query_parameters);
         $this->setOpt(CURLOPT_CUSTOMREQUEST, 'DELETE');
-        $this->setOpt(CURLOPT_POSTFIELDS, $this->buildPostData($data));
+        if(!empty($data)){
+            $this->setOpt(CURLOPT_POSTFIELDS, $this->buildPostData($data));
+        }
         return $this->exec();
     }
 
@@ -638,7 +641,7 @@ class Curl
     public function setDefaultJsonDecoder()
     {
         $this->jsonDecoder = function($response) {
-            $json_obj = json_decode($response, false);
+            $json_obj = json_decode($response, true);
             if (!($json_obj === null)) {
                 $response = $json_obj;
             }
@@ -663,8 +666,8 @@ class Curl
      */
     public function setDefaultUserAgent()
     {
-        $user_agent = 'PHP-Curl-Class/' . self::VERSION . ' (+https://github.com/php-curl-class/php-curl-class)';
-        $user_agent .= ' PHP/' . PHP_VERSION;
+        //$user_agent = 'PHP-Curl-Class/' . self::VERSION . ' (+https://github.com/php-curl-class/php-curl-class)';
+        $user_agent = 'PHP/' . PHP_VERSION;
         $curl_version = curl_version();
         $user_agent .= ' curl/' . $curl_version['version'];
         $this->setUserAgent($user_agent);
@@ -906,6 +909,9 @@ class Curl
      */
     private function parseResponse($response_headers, $raw_response)
     {
+        if($this->keepRawResponse === true){
+            return array($raw_response, $raw_response);
+        }
         $response = $raw_response;
         if (isset($response_headers['Content-Type'])) {
             if (preg_match($this->jsonPattern, $response_headers['Content-Type'])) {

@@ -3,7 +3,7 @@
 namespace frame\web;
 
 use frame\base\Exception;
-use frame\base\Object;
+use frame\base\God;
 use Load;
 use ReflectionMethod;
 
@@ -12,7 +12,7 @@ use ReflectionMethod;
  * Frame控制器基类
  * @author KowloonZh
  */
-class Controller extends Object
+class Controller extends God
 {
 
     /**

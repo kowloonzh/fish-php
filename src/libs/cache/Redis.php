@@ -2,80 +2,204 @@
 
 namespace libs\cache;
 
+use frame\base\Exception;
+use frame\base\God;
+use libs\log\Loger;
+
 /**
  * Description of Redis
- * See https://github.com/yiisoft/yii2-redis/blob/master/Connection.php
- * strings
- * @method integer setnx($key, $value)
- * @method mixed set($key, $value)
+ *
+ * Keys
+ * @method mixed del($key)
+ * @method mixed exists($key)
+ * @method mixed expire($key, $seconds)
+ * @method mixed expireat($key, $timestamp)
+ * @method mixed keys($pattern)
+ * @method mixed persist($key)
+ * @method mixed pexpire($key, $milliseconds)
+ * @method mixed pexpireat($key, $millisecondTimestamp)
+ * @method mixed pttl($key)
+ * @method mixed ttl($key)
+ * @method mixed type($key)
+ * @method mixed scan($cursor, ...$options)  // scan $cursor [match $pattern] [count $count]
+ *
+ * Strings
+ * @method mixed decr($key)
+ * @method mixed decrby($key, $decrement)
  * @method mixed get($key)
- * @method integer del($key)
+ * @method mixed getbit($key, $offset)
+ * @method mixed getrange($key, $start, $end)
  * @method mixed getset($key, $value)
- * list
- * @method mixed rpop($key)
- * @method mixed lpop($key)
- * @method mixed rpush($key, $value)
- * @method mixed lpush($key, $value)
- * @method integer llen($key)
- * @method mixed lrange($key, $start, $stop)
+ * @method mixed incr($key)
+ * @method mixed incrby($key, $increment)
+ * @method mixed incrbyfloat($key, $increment)
+ * @method mixed mget($key, ...$keys)
+ * @method mixed mset(...$keyValues)
+ * @method mixed msetnx(...$keyValues)
+ * @method mixed psetex($key, $milliseconds, $value)
+ * @method mixed set($key, $value, ...$options)
+ * @method mixed setbit($key, $offset, $value)
+ * @method mixed setex($key, $seconds, $value)
+ * @method mixed setnx($key, $value)
+ * @method mixed setrange($key, $offset, $value)
+ * @method mixed strlen($key)
+ *
+ * Lists
  * @method mixed blpop($key, $timeout)
  * @method mixed brpop($key, $timeout)
+ * @method mixed brpoplpush($source, $destination, $timeout)
+ * @method mixed lindex($key, $index)
+ * @method mixed linsert($key, $where = "before|after", $pivot, $value)
+ * @method mixed llen($key)
+ * @method mixed lpop($key)
+ * @method mixed lpush($key, $value, ...$values)
+ * @method mixed lpushx($key, $value)
+ * @method mixed lrange($key, $start, $stop)
+ * @method mixed lrem($key, $count, $value)
+ * @method mixed lset($key, $index, $value)
+ * @method mixed ltrim($key, $start, $stop)
+ * @method mixed rpop($key)
+ * @method mixed rpoplpush($source, $destination)
+ * @method mixed rpush($key, $value)
+ * @method mixed rpushx($key, $value)
+ *
+ * Hashes
+ * @method mixed hdel($key, $field, ...$fields)
+ * @method mixed hexists($key, $field)
+ * @method mixed hget($key, $field)
+ * @method mixed hgetall($key)
+ * @method mixed hincrby($key, $field, $increment)
+ * @method mixed hincrbyfloat($key, $field, $increment)
+ * @method mixed hkeys($key)
+ * @method mixed hlen($key)
+ * @method mixed hmget($key, $field, ...$fields)
+ * @method mixed hmset($key, $field, $value, ...$fieldValues)
+ * @method mixed hset($key, $field, $value)
+ * @method mixed hsetnx($key, $field, $value)
+ * @method mixed hstrlen($key, $field)
+ * @method mixed hvals($key)
+ * @method mixed hscan($key, $cursor, ...$options)   // hscan $key $cursor [match $pattern] [count $count]
+ *
+ * Sets
+ * @method mixed sadd($key, $member, ...$members)
+ * @method mixed scard($key)
+ * @method mixed sdiff($key, ...$keys)
+ * @method mixed sdiffstore($destination, $key, ...$keys)
+ * @method mixed sinter($key, ...$keys)
+ * @method mixed sinterstore($destination, $key, ...$keys)
+ * @method mixed sismember($key, $member)
+ * @method mixed smembers($key)
+ * @method mixed smove($source, $destination, $member)
+ * @method mixed spop($key)
+ * @method mixed srandmember($key)
+ * @method mixed srem($key, $member, ...$members)
+ * @method mixed sunion($key, ...$keys)
+ * @method mixed sunionstore($key, ...$keys)
+ * @method mixed sscan($key, $cursor, ...$options)   // sscan $key $cursor [match $pattern] [count $count]
+ *
+ * Sorted Sets
+ * @method mixed zadd($key, ...$options) // zadd key [nx|xx] [ch] [incr] score member [score member...]
+ * @method mixed zcard($key)
+ * @method mixed zcount($key, $min, $max)
+ * @method mixed zincrby($key, $increment, $member)
+ * @method mixed zinterstore($destination, $numkeys, $key1, $key2, ...$options) // zinterstore destination numkeys key [key ...] [weights weight] [sum|min|mix]
+ * @method mixed zrange($key, $start, $stop, ...$options) // zrange key start stop [withscores]
+ * @method mixed zrangebyscore($key, $min, $max, ...$options) // zrangebyscore key min max [withscores] [limit offset count]
+ * @method mixed zrank($key, $member)
+ * @method mixed zrem($key, $member, ...$members)
+ * @method mixed zremrangebyrank($key, $start, $stop)
+ * @method mixed zremrangebyscore($key, $min, $max)
+ * @method mixed zrevrange($key, $start, $stop)
+ * @method mixed zrevrangebyscore($key, $max, $min, ...$options) // zrevrangebyscore key max min [withscores] [limit offset count]
+ * @method mixed zrevrank($key, $member)
+ * @method mixed zscore($key, $member)
+ * @method mixed zunionstore($destination, $numkeys, $key1, $key2, ...$options) // zunionstore destination numkeys key [key ...] [weights weight] [sum|min|mix]
+ * @method mixed zscan($key, $cursor, ...$options)   // zscan $key $cursor [match $pattern] [count $count]
+ *
+ * Transactions
+ * @method mixed discard()
+ * @method mixed exec()
+ * @method mixed multi()
+ * @method mixed watch($key, ...$keys)
+ * @method mixed unwatch()
+ *
+ * PubSub
+ * @method mixed publish($channel, $message)
+ * @method mixed subscribe($channel, ...$channels)
+ *
  * @author zhangjiulong
  */
-class Redis extends \frame\base\Object
+class Redis extends God
 {
     /**
-     * @var string 主机名
+     * 主机名
+     * @var string
      */
     public $hostname = 'localhost';
 
     /**
-     * @var int 端口
+     * 端口
+     * @var int
      */
     public $port = 6379;
 
     /**
-     * @var string 密码
+     * 密码
+     * @var string
      */
     public $password;
 
     /**
-     * @var int redis的数据库，从0开始
+     * redis的数据库，从0开始
+     * @var int
      */
     public $database = 0;
 
     /**
-     * @var string unix socket 所在绝对路径 (e.g. `/var/run/redis/redis.sock`)
+     * unix socket 所在绝对路径 (e.g. `/var/run/redis/redis.sock`)
+     * @var string
      */
     public $unix_socket;
 
     /**
-     * @var int 连接redis的超时时间，默认为 ini_get("default_socket_timeout")
+     * 连接redis的超时时间，默认为 10s, // ini_get("default_socket_timeout")
+     * @var int
      */
-    public $connect_timeout;
+    public $connect_timeout = 10;
 
     /**
-     * @var int 读写数据的超时时间 单位s
+     * 读写数据的超时时间 单位s
+     * @var int
      */
     public $data_timeout;
 
     /**
-     * @var bool 是否重连
+     * 是否重连
+     * @var bool
      */
     public $auto_reconnect = false;
 
     /**
-     * @var int 重连执行次数
+     * 重连执行次数
+     * @var int
      */
     public $retry = 3;
+
+    /**
+     * 是否记录日志
+     * @var bool
+     */
+    public $log_flag = false;
 
     private $_originRetry;
 
     /**
-     * @var array 系统redis命令列表 http://redis.io/commands
+     * 系统redis命令列表 http://redis.io/commands
+     * @var array
      */
     public $redisCommands = [
         'BRPOP', // key [key ...] timeout Remove and get the last element in a list, or block until one is available
+        'BLPOP', // key [key ...] timeout Remove and get the first element in a list, or block until one is available
         'BRPOPLPUSH', // source destination timeout Pop a value from a list, push it to another list and return it; or block until one is available
         'CLIENT KILL', // ip:port Kill the connection of a client
         'CLIENT LIST', // Get the list of client connections
@@ -115,6 +239,7 @@ class Redis extends \frame\base\Object
         'HLEN', // key Get the number of fields in a hash
         'HMGET', // key field [field ...] Get the values of all the given hash fields
         'HMSET', // key field value [field value ...] Set multiple hash fields to multiple values
+        'HSCAN', // key cursor [match pattern] [count count]
         'HSET', // key field value Set the string value of a hash field
         'HSETNX', // key field value Set the value of a hash field, only if the field does not exist
         'HVALS', // key Get all the values in a hash
@@ -163,6 +288,7 @@ class Redis extends \frame\base\Object
         'SADD', // key member [member ...] Add one or more members to a set
         'SAVE', // Synchronously save the dataset to disk
         'SCARD', // key Get the number of members in a set
+        'SCAN', // cursor [match pattern] [count count]
         'SCRIPT EXISTS', // script [script ...] Check existence of scripts in the script cache.
         'SCRIPT FLUSH', // Remove all the scripts from the script cache.
         'SCRIPT KILL', // Kill the script currently in execution.
@@ -187,6 +313,7 @@ class Redis extends \frame\base\Object
         'SPOP', // key Remove and return a random member from a set
         'SRANDMEMBER', // key [count] Get one or multiple random members from a set
         'SREM', // key member [member ...] Remove one or more members from a set
+        'SSCAN', // key cursor [match pattern] [count count]
         'STRLEN', // key Get the length of the value stored in a key
         'SUBSCRIBE', // channel [channel ...] Listen for messages published to the given channels
         'SUNION', // key [key ...] Add multiple sets
@@ -213,6 +340,7 @@ class Redis extends \frame\base\Object
         'ZREVRANGEBYSCORE', // key max min [WITHSCORES] [LIMIT offset count] Return a range of members in a sorted set, by score, with scores ordered from high to low
         'ZREVRANK', // key member Determine the index of a member in a sorted set, with scores ordered from high to low
         'ZSCORE', // key member Get the score associated with the given member in a sorted set
+        'ZSCAN', // key cursor [match pattern] [count count]
         'ZUNIONSTORE', // destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] Add multiple sorted sets and store the resulting sorted set in a new key
     ];
 
@@ -253,7 +381,7 @@ class Redis extends \frame\base\Object
 
     /**
      * 打开redis连接
-     * @throws \frame\base\Exception 连接失败抛出异常
+     * @throws Exception
      */
     public function open()
     {
@@ -262,8 +390,7 @@ class Redis extends \frame\base\Object
         }
         $connection = ($this->unix_socket ?: $this->hostname . ':' . $this->port) . ', database=' . $this->database;
 
-        //@todo log
-        \libs\log\Loger::info('Opening redis DB connection: ' . $connection, 'redis.connect');
+        Loger::info('Opening redis DB connection: ' . $connection, 'redis.connect');
         $this->_socket = @stream_socket_client(
             $this->unix_socket ? 'unix://' . $this->unix_socket : 'tcp://' . $this->hostname . ':' . $this->port, $errorNumber, $errorDescription, $this->connect_timeout ? $this->connect_timeout : ini_get("default_socket_timeout")
         );
@@ -276,8 +403,8 @@ class Redis extends \frame\base\Object
             }
             $this->executeCommand('SELECT', [$this->database]);
         } else {
-            \libs\log\Loger::error("Failed to open redis DB connection ($connection): $errorNumber - $errorDescription", 'redis');
-            throw new \frame\base\Exception('Failed to open DB connection.', (int)$errorNumber);
+            Loger::error("Failed to open redis DB connection ($connection): $errorNumber - $errorDescription", 'redis');
+            throw new Exception('Failed to open DB connection.', (int)$errorNumber);
         }
     }
 
@@ -289,7 +416,7 @@ class Redis extends \frame\base\Object
         if ($this->_socket !== null) {
             $connection = ($this->unix_socket ?: $this->hostname . ':' . $this->port) . ', database=' . $this->database;
             //@todo log
-            \libs\log\Loger::info('Closing DB connection: ' . $connection, 'redis.connect');
+            Loger::info('Closing DB connection: ' . $connection, 'redis.connect');
             $this->executeCommand('QUIT');
             stream_socket_shutdown($this->_socket, STREAM_SHUT_RDWR);
             $this->_socket = null;
@@ -298,10 +425,11 @@ class Redis extends \frame\base\Object
 
     /**
      * 实现__call魔术方法，方便直接对命令的调用,比如
-     * FrameRedist::di()->lpush('mylist','hello');===>相当于 FrameRedist::di()->executeCommand('LPUSH',['mylist','hello']);
+     * Redis::di()->lpush('mylist','hello');===>相当于 Redis::di()->executeCommand('LPUSH',['mylist','hello']);
      * @param string $name
      * @param array $params
-     * @return mixed
+     * @return array|bool|null|string
+     * @throws Exception
      */
     public function __call($name, $params)
     {
@@ -309,7 +437,7 @@ class Redis extends \frame\base\Object
         if (in_array($redisCommand, $this->redisCommands)) {
             return $this->executeCommand($name, $params);
         } else {
-            throw new \frame\base\Exception('call to unknow redis command ' . $name);
+            throw new Exception('call to unknow redis command ' . $name);
         }
     }
 
@@ -331,7 +459,7 @@ class Redis extends \frame\base\Object
      * - `array` 当命令返回"Multi-bulk replies"的时候
      *
      * See [redis protocol description](http://redis.io/topics/protocol)
-     * @throws \frame\base\Exception 当命令返回 [error reply]的时候(http://redis.io/topics/protocol#error-reply).
+     * @throws Exception 当命令返回 [error reply]的时候(http://redis.io/topics/protocol#error-reply).
      */
     public function executeCommand($name, $params = [])
     {
@@ -342,8 +470,10 @@ class Redis extends \frame\base\Object
         foreach ($params as $arg) {
             $command .= '$' . mb_strlen($arg, '8bit') . "\r\n" . $arg . "\r\n";
         }
-        //@todo log
-        \libs\log\Loger::info(['command' => $name, 'params' => $params], 'redis.execute');
+
+        if ($this->log_flag) {
+            Loger::info(['command' => $name, 'params' => $params], 'redis.execute');
+        }
         fwrite($this->_socket, $command);
 
         return $this->parseResponse(implode(' ', $params));
@@ -352,7 +482,7 @@ class Redis extends \frame\base\Object
     /**
      * @param string $command
      * @return mixed
-     * @throws \frame\base\Exception on error
+     * @throws Exception on error
      */
     private function parseResponse($command)
     {
@@ -365,12 +495,15 @@ class Redis extends \frame\base\Object
                 $this->_socket = null;
                 return $this->executeCommand($name, $params);
             } else {
-                throw new \frame\base\Exception("Failed to read from socket.\nRedis command was: " . $command);
+                throw new Exception("Failed to read from socket.\nRedis command was: " . $command);
             }
         }
 
         $this->resetRetry();
-        \libs\log\Loger::debug($command . "\n" . $line, 'redis.response');
+        if ($this->log_flag) {
+
+            Loger::debug($command . "\n" . $line, 'redis.response');
+        }
         $type = $line[0];
         $line = mb_substr($line, 1, -2, '8bit');
         switch ($type) {
@@ -381,7 +514,7 @@ class Redis extends \frame\base\Object
                     return $line;
                 }
             case '-': // Error reply
-                throw new \frame\base\Exception("Redis error: " . $line . "\nRedis command was: " . $command);
+                throw new Exception("Redis error: " . $line . "\nRedis command was: " . $command);
             case ':': // Integer reply
                 // no cast to int as it is in the range of a signed 64 bit integer
                 return $line;
@@ -389,11 +522,11 @@ class Redis extends \frame\base\Object
                 if ($line == '-1') {
                     return null;
                 }
-                $length = $line + 2;
+                $length = intval($line) + 2;
                 $data   = '';
                 while ($length > 0) {
                     if (($block = fread($this->_socket, $length)) === false) {
-                        throw new \frame\base\Exception("Failed to read from socket.\nRedis command was: " . $command);
+                        throw new Exception("Failed to read from socket.\nRedis command was: " . $command);
                     }
                     $data .= $block;
                     $length -= mb_strlen($block, '8bit');
@@ -409,7 +542,7 @@ class Redis extends \frame\base\Object
 
                 return $data;
             default:
-                throw new \frame\base\Exception('Received illegal data from redis: ' . $line . "\nRedis command was: " . $command);
+                throw new Exception('Received illegal data from redis: ' . $line . "\nRedis command was: " . $command);
         }
     }
 }

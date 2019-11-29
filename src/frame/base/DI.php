@@ -9,7 +9,7 @@ use Closure;
  * Frame的DI容器
  * @author KowloonZh
  */
-class DI extends Object
+class DI extends God
 {
 
     /**

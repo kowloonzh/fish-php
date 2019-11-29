@@ -3,19 +3,19 @@
 namespace libs\log;
 
 use frame\base\Exception;
-use frame\base\Object;
+use frame\base\God;
 
 /**
  * Description of LogTarget
  * 日志输出地
  * @author KowloonZh
  */
-abstract class LogTarget extends Object
+abstract class LogTarget extends God
 {
 
     public $enabled    = true;
     public $messages   = [];
-    public $capacity   = 1000;
+    public $capacity   = 100;
     public $categories = [];
     public $except     = [];
     private $_levels   = 0;

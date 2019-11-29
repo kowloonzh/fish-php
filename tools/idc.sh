@@ -2,7 +2,7 @@
 
 #线上集群列表 idc=>hostname
 LINE_CLUSTER_LIST=(
-    "dev=>10.16.57.219"
+    "dev=>"
 )
 
 #当前主机的ip列表
@@ -63,6 +63,6 @@ function get_idc()
         done
         let "index += 1"
     done    
-    echo 'unknow'
+    echo 'unknown'
     return 1
 }

@@ -1,20 +1,27 @@
 <?php
 
 namespace home\consoles;
+use common\consoles\Console;
 
 /**
  * Description of DefaultConsole
  *
- * @author KowloonZh
+ * @author zhangjiulong
  */
-class DefaultConsole extends \frame\console\Console
+class DefaultConsole extends Console
 {
     
     public function testAction()
     {
-        
+        // 常驻进程
+        //$this->runLoop(function(){
+        //    echo 'hello';
+        //});
+
+
     }
     
+    //生成模块目录
     public function genAction($module)
     {
         $modulePath = \Load::getAlias('@app/'.$module);
@@ -26,5 +33,4 @@ class DefaultConsole extends \frame\console\Console
         }
         return 'done!';
     }
-    
 }

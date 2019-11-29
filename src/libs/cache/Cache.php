@@ -2,14 +2,14 @@
 
 namespace libs\cache;
 
-use frame\base\Object;
+use frame\base\God;
 
 /**
  * Description of Cache
  * 缓存基类
  * @author KowloonZh
  */
-abstract class Cache extends Object
+abstract class Cache extends God
 {
     /**
      * 所有key的前缀

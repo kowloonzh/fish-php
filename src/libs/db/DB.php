@@ -9,7 +9,7 @@ use libs\log\Loger;
  * 数据库链接
  * @author zhangjiulong
  */
-class DB extends \frame\base\Object
+class DB extends \frame\base\God
 {
 
     /**

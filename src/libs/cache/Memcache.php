@@ -163,7 +163,7 @@ class Memcache extends Cache
     }
 }
 
-class MemcacheServer extends \frame\base\Object {
+class MemcacheServer extends \frame\base\God {
 
     /**
      * memcache服务器的主机名或者ip地址

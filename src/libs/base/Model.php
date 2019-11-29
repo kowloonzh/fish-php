@@ -7,7 +7,7 @@ namespace libs\base;
  * 业务model基类
  * @author KowloonZh
  */
-class Model extends \frame\base\Object
+class Model extends \frame\base\God
 {
 
     use \libs\utils\ValidateTrait;

@@ -7,7 +7,7 @@ namespace frame\web;
  * Frame的响应类
  * @author KowloonZh
  */
-class Response extends \frame\base\Object
+class Response extends \frame\base\God
 {
     /**
      * 发送前的内容,在send()中会转换为content的值

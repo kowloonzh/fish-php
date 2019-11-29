@@ -2,12 +2,14 @@
 
 namespace libs\log;
 
+use frame\base\God;
+
 /**
  * Description of Loger
  * 日志类
  * @author KowloonZh
  */
-class Loger extends \frame\base\Object
+class Loger extends God
 {
 
     const LEVEL_ERROR = 1;
@@ -19,9 +21,9 @@ class Loger extends \frame\base\Object
         self::LEVEL_INFO  => 'info',
         self::LEVEL_DEBUG => 'debug',
     ];
-    public $messages          = [];
-    public $capacity          = 1000;    //总容量
-    public $targets           = [];   //消息接收者
+    public $messages = [];
+    public $capacity = 1000;    // 总容量
+    public $targets = [];   // 消息接收者
 
     public function init()
     {
@@ -37,11 +39,12 @@ class Loger extends \frame\base\Object
 
     /**
      * 返回di容器中log对应的对象
+     *
      * @param string $id
-     * @param boolean $throwException
-     * @return \libs\log\Loger
+     * @param bool $throwException
+     * @return self
      */
-    public static function di($id = 'log', $throwException = true)
+    static public function di($id = "log", $throwException = true)
     {
         return parent::di($id, $throwException);
     }
@@ -72,11 +75,20 @@ class Loger extends \frame\base\Object
     {
         $time             = microtime(true);
         $this->messages[] = [$message, $level, $category, $time];
-        /**
-         * 当消息总量达到容量上限时，进行一次写入
-         */
-        if (count($this->messages) >= $this->capacity) {
-            $this->flush();
+
+        // 命令行模式下, 每条都写
+        if (PHP_SAPI == 'cli') {
+
+            $this->flush(true);
+
+        } else {
+
+            /**
+             * 当消息总量达到容量上限时，进行一次写入
+             */
+            if (count($this->messages) >= $this->capacity) {
+                $this->flush();
+            }
         }
     }
 
@@ -84,6 +96,10 @@ class Loger extends \frame\base\Object
     {
         $targetErrors = [];
         foreach ($this->targets as $target) {
+
+            /**
+             * @var LogTarget $target
+             */
             if ($target->enabled) {
                 try {
                     $target->collect($this->messages, $final);
@@ -92,7 +108,7 @@ class Loger extends \frame\base\Object
                     $targetErrors[]  = [
                         'Uable to send log via ' . get_class($target) . ':' . $e->getMessage(),
                         Loger::LEVEL_ERROR,
-                        __METHOD__,
+                        'target.flush',
                         microtime(true),
                     ];
                 }

@@ -2,7 +2,8 @@
 
 namespace libs\db;
 
-use frame\base\Object;
+use frame\base\Exception;
+use frame\base\God;
 use libs\log\Loger;
 use Load;
 use PDO;
@@ -148,9 +149,9 @@ use PDOStatement;
  *
  *
  * ~~~~~~~~
- * @author zhangjiulong
+ * @author KowloonZh
  */
-class Query extends Object
+class Query extends God
 {
 
     /**
@@ -206,7 +207,7 @@ class Query extends Object
 
     public function __construct($config = array())
     {
-        //因sql依赖db,先处理db
+        // 因sql依赖db,先处理db
         if (isset($config['db'])) {
             $this->db = $config['db'];
             unset($config['db']);
@@ -268,8 +269,8 @@ class Query extends Object
 
     /**
      * 执行sql 增删改操作执行此方法
-     * @return int 返回影响的行数
-     * @throws \frame\base\Exception
+     * @return int // 返回影响的行数
+     * @throws Exception
      */
     public function execute()
     {
@@ -280,9 +281,8 @@ class Query extends Object
         $this->prepare();
 
         $rawSql = $this->getRawSql();
-
+        $_REQUEST['logsql'][] = $rawSql;
         try {
-            //@TODO 此处可记录SQL日志 log($this->getRawSql())
             Loger::info($rawSql, 'sql.execute');
             $begin_time = microtime(true);
             @$this->pdoStatement->execute();
@@ -292,13 +292,14 @@ class Query extends Object
 
             // 记录超时的日志
             if ($consume >= $this->db->log_timeout) {
-                Loger::info(['consume(ms)' => $consume, 'sql' => $rawSql], 'sql.timeout');
+                Loger::info(['consume(ms)' => $consume, 'sql' => $rawSql, 'params'=>$_GET], 'sql.timeout');
             }
 
             $n = $this->pdoStatement->rowCount();
             return $n;
         } catch (\PDOException $e) {
-            //如果自动可以自动重连
+
+            // 如果自动可以自动重连
             if (in_array($e->errorInfo[1], array(2013, 2006)) && $this->db->auto_reconnect) {
                 $this->db->close();
                 $this->cancel();
@@ -307,20 +308,21 @@ class Query extends Object
             } else {
 
                 // 记录错误的日志
-                Loger::error($rawSql, 'sql');
+                Loger::error(['sql' => $rawSql, 'message' => $e->getMessage()], 'sql');
 
-                throw new \frame\base\Exception('Error to execute sql, ' . $e->getMessage(), (int)$e->getCode() + 1000);
+                throw new Exception('Error to execute sql, ' . $e->getMessage(), (int)$e->getCode() + 1000);
             }
         }
     }
 
     /**
      * SQL语句的预处理
-     * @return null
-     * @throws \frame\base\Exception
+     * @throws Exception
      */
     public function prepare()
     {
+        $sql = '';
+
         try {
             if ($this->pdoStatement) {
                 $this->bindPendingParams();
@@ -332,16 +334,18 @@ class Query extends Object
              * 连接数据库
              */
             $this->db->open();
+
             /**
              * 预处理
              */
             $this->pdoStatement = $this->db->pdo->prepare($sql);
+
             /**
              * 绑定参数
              */
             $this->bindPendingParams();
         } catch (\Exception $e) {
-            throw new \frame\base\Exception('Fail to prepare SQL: ' . $sql . ',' . $e->getMessage(), (int)$e->getCode() + 1000);
+            throw new Exception('Fail to prepare SQL: ' . $sql . ',' . $e->getMessage(), (int)$e->getCode() + 1000);
         }
     }
 
@@ -355,7 +359,7 @@ class Query extends Object
 
     /**
      * 重置Query对象
-     * @param boolean $keepFrom 是否保留query的From值
+     * @param boolean $keepFrom // 是否保留query的From值
      * @return Query
      */
     public function reset($keepFrom = false)
@@ -427,7 +431,7 @@ class Query extends Object
      * 生成sql语句通过$query数组
      * @param array $query
      * @return string
-     * @throws \frame\base\Exception
+     * @throws Exception
      */
     public function buildQuery($query)
     {
@@ -437,7 +441,7 @@ class Query extends Object
         if (!empty($query['from'])) {
             $sql .= " FROM " . $query['from'];
         } else {
-            throw new \frame\base\Exception('The DB query must contain the "from" portion');
+            throw new Exception('The DB query must contain the "from" portion');
         }
         if (!empty($query['join'])) {
             $sql .= " " . (is_array($query['join']) ? implode(" ", $query['join']) : $query['join']);
@@ -458,7 +462,7 @@ class Query extends Object
             $sql .= " ORDER BY " . $query['order'];
         }
         $limit  = isset($query['limit']) ? (int)$query['limit'] : -1;
-        $offset = isset($query['limit']) ? (int)$query['offset'] : -1;
+        $offset = isset($query['offset']) ? (int)$query['offset'] : -1;
         if ($limit > 0 || $offset > 0) {
             $sql = $this->applyLimit($sql, $limit, $offset);
         }
@@ -485,9 +489,9 @@ class Query extends Object
 
     /**
      * 插入单条数据
-     * @param string $table 表名
-     * @param array $columns [字段=>值]
-     * @return int 影响的行数
+     * @param string $table // 表名
+     * @param array $columns // [字段=>值]
+     * @return int // 影响的行数
      */
     public function insert($table, $columns)
     {
@@ -525,13 +529,13 @@ class Query extends Object
      * @param array $columns // 字段列表[column1,column2...]
      * @param array $rows // 多行值 [[column1=>value1,column2=>value2],[....]]
      * @return int // 影响的行数
-     * @throws \frame\base\Exception
+     * @throws Exception
      */
     public function batchInsert($table, $columns, $rows)
     {
         $values = [];
         if (empty($rows)) {
-            throw new \frame\base\Exception('BatchInsert Error: The VALUES can not be empty');
+            throw new Exception('BatchInsert Error: The VALUES can not be empty');
         }
         foreach ($rows as $row) {
             $vs = [];
@@ -547,7 +551,7 @@ class Query extends Object
                 }
                 $vs[$i] = $value;
             }
-            //表示为关联数组
+            // 表示为关联数组
             if (!isset($vs[0])) {
                 $rvs = [];
                 foreach ($columns as $name) {
@@ -570,11 +574,11 @@ class Query extends Object
 
     /**
      * 修改表记录
-     * @param string $table 表名
-     * @param array $columns [字段=>值]
-     * @param string|array $condition 条件表达式
-     * @param array $params 参数
-     * @return int 影响的行数
+     * @param string $table // 表名
+     * @param array $columns // [字段=>值]
+     * @param string|array $condition // 条件表达式
+     * @param array $params // 参数
+     * @return int // 影响的行数
      */
     public function update($table, $columns, $condition = '', $params = [])
     {
@@ -597,10 +601,10 @@ class Query extends Object
 
     /**
      * 删除表记录
-     * @param string $table 表名
-     * @param array|string $condition 条件表达式
-     * @param array $params 待绑定的参数
-     * @return int 影响的行数
+     * @param string $table // 表名
+     * @param array|string $condition // 条件表达式
+     * @param array $params // 待绑定的参数
+     * @return int // 影响的行数
      */
     public function delete($table, $condition = '', $params = [])
     {
@@ -613,7 +617,7 @@ class Query extends Object
 
     /**
      * 相当于sql中的select语句
-     * @param string|array $columns 字段列表
+     * @param string|array $columns // 字段列表
      * @param string $option
      * @return Query
      */
@@ -701,7 +705,7 @@ class Query extends Object
 
     /**
      * 相当于sql中的from语句
-     * @param string|array $tables 表名
+     * @param string|array $tables // 表名
      * @return Query
      */
     public function from($tables)
@@ -738,14 +742,14 @@ class Query extends Object
      * 添加待绑定的参数 只支持:pl=>val的绑定方式
      * @param array $params
      * @return $this
-     * @throws \frame\base\Exception
+     * @throws Exception
      */
     public function addParams(array $params)
     {
         if (!empty($params)) {
 
             if (isset($params[0]) || isset($params[1])) {
-                throw new \frame\base\Exception('Not support the placeholder "?"');
+                throw new Exception('Not support the placeholder "?"');
             }
 
             if (empty($this->params)) {
@@ -817,8 +821,8 @@ class Query extends Object
 
     /**
      * 内联 join table
-     * @param string $table 表名
-     * @param string $conditions 连接条件
+     * @param string $table // 表名
+     * @param string $conditions // 连接条件
      * @param array $params
      * @return Query
      */
@@ -839,8 +843,8 @@ class Query extends Object
 
     /**
      * 左连接 left join table
-     * @param string $table 表名
-     * @param string $conditions 连接条件
+     * @param string $table // 表名
+     * @param string $conditions // 连接条件
      * @param array $params
      * @return Query
      */
@@ -851,8 +855,8 @@ class Query extends Object
 
     /**
      * 右连接 right join table
-     * @param string $table 表名
-     * @param string $conditions 连接条件
+     * @param string $table // 表名
+     * @param string $conditions // 连接条件
      * @param array $params
      * @return Query
      */
@@ -919,26 +923,50 @@ class Query extends Object
 
     /**
      * order by 语句
-     * @param string|array $columns
-     * @return Query
+     * eg.
+     * order('id asc')
+     * order(['id asc','age desc'])
+     * order(['id'=>'asc','age'=>'desc'])
+     * @param $columns
+     * @return $this
+     * @throws Exception
      */
     public function order($columns)
     {
         if (is_string($columns) && strpos($columns, '(') !== false)
             $this->_query['order'] = $columns;
         else {
-            if (!is_array($columns))
+            if (!is_array($columns)){
                 $columns = preg_split('/\s*,\s*/', trim($columns), -1, PREG_SPLIT_NO_EMPTY);
-            foreach ($columns as $i => $column) {
-                if (is_object($column))
-                    $columns[$i] = (string)$column;
-                elseif (strpos($column, '(') === false) {
-                    if (preg_match('/^(.*?)\s+(asc|desc)$/i', $column, $matches))
-                        $columns[$i] = $this->db->quoteColumnName($matches[1]) . ' ' . strtoupper($matches[2]);
-                    else
-                        $columns[$i] = $this->db->quoteColumnName($column);
+            }
+
+            // 如果是非关联数组
+            if(isset($columns[0])){
+                foreach ($columns as $i => $column) {
+                    if (is_object($column))
+                        $columns[$i] = (string)$column;
+                    elseif (strpos($column, '(') === false) {
+                        if (preg_match('/^(.*?)\s+(asc|desc)$/i', $column, $matches))
+                            $columns[$i] = $this->db->quoteColumnName($matches[1]) . ' ' . strtoupper($matches[2]);
+                        else
+                            $columns[$i] = $this->db->quoteColumnName($column);
+                    }
+                }
+            }else{
+
+                $orders = $columns;
+                $columns = [];
+
+                foreach ($orders as $column => $direct) {
+
+                    if (preg_match('/^asc|desc$/i',$direct,$matches)){
+                        $columns[] = $this->db->quoteColumnName($column) . ' ' . strtoupper($matches[0]);
+                    }else{
+                        throw new Exception('The order by direction must be asc or desc');
+                    }
                 }
             }
+
             $this->_query['order'] = implode(', ', $columns);
         }
         return $this;
@@ -998,7 +1026,7 @@ class Query extends Object
 
     /**
      * offset语句
-     * @param int $offset 偏移量
+     * @param int $offset // 偏移量
      * @return Query
      */
     public function offset($offset)
@@ -1046,7 +1074,7 @@ class Query extends Object
      * 组装sql的条件表达式
      * @param $conditions
      * @return string
-     * @throws \frame\base\Exception
+     * @throws Exception
      */
     protected function buildCondition($conditions)
     {
@@ -1091,7 +1119,7 @@ class Query extends Object
      * 组装条件
      * @param string|array $conditions
      * @return string
-     * @throws \frame\base\Exception
+     * @throws Exception
      */
     protected function processConditions($conditions)
     {
@@ -1154,15 +1182,15 @@ class Query extends Object
             }
             return implode($andor, $expressions);
         }
-        throw new \frame\base\Exception('unknow operator: ' . $operator);
+        throw new Exception('Unknown operator: ' . $operator);
     }
 
     /**
      * 组装连接语句
-     * @param string $type 连接类型
-     * @param string $table 表名
-     * @param string|array $conditions 连接条件
-     * @param array $params 参数绑定
+     * @param string $type // 连接类型
+     * @param string $table // 表名
+     * @param string|array $conditions // 连接条件
+     * @param array $params // 参数绑定
      * @return Query
      */
     private function joinInternal($type, $table, $conditions = '', $params = array())
@@ -1231,6 +1259,8 @@ class Query extends Object
      */
     public function queryRow()
     {
+        $this->limit(1);
+
         $res = $this->queryInternal('fetch');
         if ($res == false) {
             return [];
@@ -1254,10 +1284,10 @@ class Query extends Object
 
     /**
      * 执行查询
-     * @param string $method 查询类型
-     * @param int $fetchMode 返回的数据结构
+     * @param string $method // 查询类型
+     * @param int $fetchMode // 返回的数据结构
      * @return mixed
-     * @throws \frame\base\Exception
+     * @throws Exception
      */
     private function queryInternal($method, $fetchMode = null)
     {
@@ -1277,7 +1307,7 @@ class Query extends Object
                 echo $rawSql;
                 die;
             }
-            //@TODO 此处记录查询语句 log($this->getRawSql())
+
             Loger::info($rawSql, 'sql.query');
             $begin_time = microtime(true);
             @$this->pdoStatement->execute();
@@ -1287,7 +1317,7 @@ class Query extends Object
 
             // 记录超时日志
             if ($consume >= $this->db->log_timeout) {
-                Loger::info(['consume(ms)' => $consume, 'sql' => $rawSql], 'sql.timeout');
+                Loger::info(['consume(ms)' => $consume, 'sql' => $rawSql,'params'=>$_GET], 'sql.timeout');
             }
 
             if ($method == '') {
@@ -1308,9 +1338,9 @@ class Query extends Object
                 return $this->queryInternal($method, $fetchMode);
             } else {
                 // 记录错误日志
-                Loger::error($rawSql, 'sql');
+                Loger::error(['sql' => $rawSql, 'message' => $e->getMessage()], 'sql');
 
-                throw new \frame\base\Exception('Query fail:' . $e->getMessage(), (int)$e->getCode() + 1000);
+                throw new Exception('Query fail:' . $e->getMessage(), (int)$e->getCode() + 1000);
             }
         }
     }

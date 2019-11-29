@@ -8,7 +8,7 @@ namespace libs\utils;
  * usage: libs\utils\UploadFile::getIns($filename);
  * @author KowloonZh
  */
-class UploadFile extends \frame\base\Object
+class UploadFile extends \frame\base\God
 {
 
     /**

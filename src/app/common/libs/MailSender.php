@@ -7,7 +7,7 @@ namespace common\libs;
  * 邮件发送类
  * @author JIU
  */
-class MailSender extends \frame\base\Object implements \libs\utils\MailInterface
+class MailSender extends \frame\base\God implements \libs\utils\MailInterface
 {
 
     public $sendFunc = "send";

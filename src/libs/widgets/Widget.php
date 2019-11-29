@@ -7,7 +7,7 @@ namespace libs\widgets;
  * 挂件基类
  * @author KowloonZh
  */
-class Widget extends \frame\base\Object
+class Widget extends \frame\base\God
 {
     /**
      * 视图文件的后缀

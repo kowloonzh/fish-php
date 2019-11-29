@@ -59,7 +59,7 @@ namespace libs\base;
  * ~~~~~~
  * @author KowloonZh
  */
-abstract class Dao extends \frame\base\Object
+abstract class Dao extends \frame\base\God
 {
     /**
      * 返回的是\libs\db\Query的对象实例

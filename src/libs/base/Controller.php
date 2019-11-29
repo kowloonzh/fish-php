@@ -14,12 +14,11 @@ class Controller extends \frame\web\Controller
 
     /**
      * 返回的结果
-     * @var array 
+     * @var array
      */
     protected $_msg = [
         'errno'  => 0,
         'errmsg' => '',
-        'node'   => '',
         'data'   => [
         ]
     ];
@@ -27,16 +26,18 @@ class Controller extends \frame\web\Controller
     public function init()
     {
         parent::init();
-        $this->_msg['node'] = posix_uname()['nodename'];
+        //\Load::$app->getResponse()->addHeaders("node", posix_uname()['nodename']);
     }
 
     /**
      * 设置返回的_msg里面的data
-     * @param array $data
+     * @param $data
+     * @return array
      */
     public function setData($data)
     {
-        $this->_msg['data'] = (array) $data + $this->_msg['data'];
+        $this->_msg['data'] = $data;
+        return $this->_msg;
     }
 
     protected function beforeAction()

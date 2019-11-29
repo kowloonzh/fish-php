@@ -8,17 +8,9 @@ if [ "$ROOT" == "tools" ];then
     exit 1
 fi
 
-#更新src/task目录下.signal开头的文件内容
-genUpdateFile()
-{
-    for file in `ls -A "$ROOT/src/task"`
-    do 
-        filename=$ROOT/src/task/$file
-        if [ "${file:0:7}" == ".signal" ];then
-            echo "update" > $filename
-            echo -e "Update script $file ok ...\n"
-        fi
-    done
-}
+# 优雅的杀掉常驻进程 /usr/local/bin/php index.php home/default/test
+num=`ps aux|grep index.php|grep -v grep|grep -v lockf|awk '{print $2}'|wc -l`
 
-genUpdateFile
+if (( ${num} > 0 ));then
+    kill -USR2 `ps aux|grep index.php|grep -v grep|grep -v lockf|awk '{print $2}'`
+fi
