@@ -13,10 +13,10 @@ class ArrayUtil
     /**
      * 用空格或者逗号或者换行将字串分割成数组
      * 使用：ArrayUtil::string2array($str)
-     * 案例 $str = 'zhangping KowloonZh'; 
-     *      $str = 'zhangping ,KowloonZh';
-     *      $str = "zhangping \n,KowloonZh";
-     * 返回 array('zhangping','KowloonZh') 
+     * 案例 $str = 'zhangsan KowloonZh';
+     *      $str = 'zhangsan ,KowloonZh';
+     *      $str = "zhangsan \n,KowloonZh";
+     * 返回 array('zhangsan','KowloonZh')
      * @param string $str
      * @return array
      */

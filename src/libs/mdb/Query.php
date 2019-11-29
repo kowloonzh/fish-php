@@ -44,8 +44,8 @@ use MongoDB\Driver\Command;
  * $res = $query->from('user')->where(['age'=>['$gt'=>18]])->queryAll();
  * return: 二维关联数组
  * [
- *      ['_id'=>MongoDB\BSON\ObjectID{oid:"593141c71d3cc23a0366bfc1"},'name'=>'zhangping','age'=>20,'gender'=>'m'],
- *      ['_id'=>MongoDB\BSON\ObjectID{oid:"593141e61d3cc23a55132131"},'name'=>'zengyan','age'=>22,'gender'=>'m'],
+ *      ['_id'=>MongoDB\BSON\ObjectID{oid:"593141c71d3cc23a0366bfc1"},'name'=>'zhangsan','age'=>20,'gender'=>'m'],
+ *      ['_id'=>MongoDB\BSON\ObjectID{oid:"593141e61d3cc23a55132131"},'name'=>'lisi','age'=>22,'gender'=>'m'],
  *      ....
  * ]
  *
@@ -53,8 +53,8 @@ use MongoDB\Driver\Command;
  * $res = $query->from('user')->select('username,age','_id')->where(['age'=>['$gt'=>18]])->queryAll();
  * return: 二维关联数组
  * [
- *      ['name'=>'zhangping','age'=>20],
- *      ['name'=>'zengyan','age'=>22],
+ *      ['name'=>'zhangsan','age'=>20],
+ *      ['name'=>'lisi','age'=>22],
  *      ....
  * ]
  *
@@ -65,7 +65,7 @@ use MongoDB\Driver\Command;
  *              ->andWhere(['username'=>new Regex('^zhang','')])   // just the same sql in mysql:  username like 'zhang%'
  *              ->queryRow();
  * return: 一维关联数组
- * ['name'=>'zhangping','age'=>20]
+ * ['name'=>'zhangsan','age'=>20]
  *
  *
  * 查询某个字段的集合 db.user.find({'age':{$lt:20}},{username:1,_id:0});
